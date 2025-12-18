@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nano Banana - 革命性的AI图像编辑工具</title>
+    <style>
+        /* CSS Variables for Banana-inspired Color Scheme */
+        :root {
+            --banana-primary: #FFE033;
+            --banana-secondary: #FFD700;
+            --banana-dark: #F9A826;
+            --banana-light: #FFF8DC;
+            --accent-purple: #8B5CF6;
+            --accent-blue: #3B82F6;
+            --text-dark: #1F2937;
+            --text-light: #6B7280;
+            --bg-light: #F9FAFB;
+            --bg-white: #FFFFFF;
+            --gradient-primary: linear-gradient(135deg, #FFE033 0%, #F9A826 100%);
+            --gradient-secondary: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%);
+            --shadow-soft: 0 10px 40px rgba(0, 0, 0, 0.1);
+            --shadow-hard: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(255, 224, 51, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            color: var(--text-dark);
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero .subtitle {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .hero .description {
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            opacity: 0.8;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--bg-white);
+            color: var(--banana-primary);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hard);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--bg-white);
+            border: 2px solid var(--bg-white);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-white);
+            color: var(--banana-primary);
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        nav.scrolled {
+            background: rgba(255, 255, 255, 0.98);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--banana-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--banana-primary);
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 100px 0;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: var(--text-dark);
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--text-light);
+            margin-bottom: 4rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Value Props */
+        .value-props {
+            background: var(--bg-white);
+        }
+
+        .props-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            margin-top: 4rem;
+        }
+
+        .prop-card {
+            background: var(--bg-light);
+            padding: 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .prop-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--banana-primary);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .prop-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: var(--gradient-primary);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .prop-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        /* Features */
+        .features {
+            background: var(--bg-light);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            margin-top: 4rem;
+        }
+
+        .feature-card {
+            background: var(--bg-white);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-hard);
+        }
+
+        .feature-image {
+            height: 250px;
+            background: var(--gradient-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: white;
+        }
+
+        .feature-content {
+            padding: 2rem;
+        }
+
+        .feature-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        /* Users Section */
+        .users {
+            background: var(--bg-white);
+        }
+
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+
+        .user-card {
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-light);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .user-card:hover {
+            background: var(--gradient-primary);
+            color: var(--text-dark);
+            transform: translateY(-5px);
+        }
+
+        .user-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Comparison Table */
+        .comparison {
+            background: var(--bg-light);
+        }
+
+        .comparison-table {
+            background: var(--bg-white);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            margin-top: 3rem;
+        }
+
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th {
+            background: var(--gradient-primary);
+            color: var(--text-dark);
+            padding: 1.5rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover {
+            background: var(--bg-light);
+        }
+
+        /* FAQ */
+        .faq {
+            background: var(--bg-white);
+        }
+
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .faq-item {
+            background: var(--bg-light);
+            padding: 2rem;
+            border-radius: 15px;
+            border-left: 5px solid var(--banana-primary);
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .faq-answer {
+            color: var(--text-light);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: var(--gradient-secondary);
+            color: white;
+            text-align: center;
+            padding: 80px 0;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--text-dark);
+            color: white;
+            padding: 50px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 1rem;
+            color: var(--banana-primary);
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section a {
+            color: #9CA3AF;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--banana-primary);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #374151;
+            color: #9CA3AF;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-30px); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .section {
+                padding: 60px 0;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .faq-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-table {
+                overflow-x: auto;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-light);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--banana-primary);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--banana-dark);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                🍌 Nano Banana
+            </div>
+            <ul class="nav-links">
+                <li><a href="#features">功能</a></li>
+                <li><a href="#users">用户</a></li>
+                <li><a href="#comparison">对比</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#contact">联系</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content fade-in-up">
+                <h1>🍌 Nano Banana</h1>
+                <p class="subtitle">一句话编辑，保持人物一致性，多图无缝融合</p>
+                <p class="description">告别传统AI绘图的痛点，Nano Banana 让图像编辑变得像聊天一样简单。</p>
+                <div class="cta-buttons">
+                    <a href="#" class="btn btn-primary">免费体验</a>
+                    <a href="#" class="btn btn-secondary">观看演示视频</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Value Props Section -->
+    <section class="section value-props">
+        <div class="container">
+            <h2 class="section-title">告别变脸尴尬，修图不再需要PS</h2>
+            <p class="section-subtitle">传统AI绘图最大的痛点终于被解决！Nano Banana 带来了三大革命性突破</p>
+
+            <div class="props-grid">
+                <div class="prop-card">
+                    <div class="prop-icon">🎯</div>
+                    <h3>惊人一致性</h3>
+                    <p>同一角色多场景不变脸。记住角色的长相、发型、甚至特定的胎记，跨场景演出保持高度统一。</p>
+                </div>
+
+                <div class="prop-card">
+                    <div class="prop-icon">💬</div>
+                    <h3>口语化编辑</h3>
+                    <p>像聊天一样修图。"把背景换成赛博朋克街道"、"把T恤换成黑色西装"，一句话精准修改。</p>
+                </div>
+
+                <div class="prop-card">
+                    <div class="prop-icon">🧩</div>
+                    <h3>多图融合</h3>
+                    <p>最多14张图智能合成。自动处理褶皱、光影和身材契合度，场景融合效果极其真实。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="section features" id="features">
+        <div class="container">
+            <h2 class="section-title">核心功能展示</h2>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-image">🎭</div>
+                    <div class="feature-content">
+                        <h3>爆火的3D公仔化</h3>
+                        <p>把你的照片变成精致的手办。真实照片 → 3D盲盒公仔、皮克斯风格角色、赛博朋克战士。</p>
+                        <p><strong>万能公式：</strong>[主体] + 变成 [Q版比例] + [PVC材质] + [柔和布光]</p>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-image">🔄</div>
+                    <div class="feature-content">
+                        <h3>角色一致性演示</h3>
+                        <p>告别"换一张图就变一张脸"的时代！脸永远是同一张脸，对小说插画、品牌IP极其有用。</p>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-image">✏️</div>
+                    <div class="feature-content">
+                        <h3>口语化编辑演示</h3>
+                        <p>所见即所得的修图体验。局部精准修改、涂鸦功能、一键消除与补充，修改极其精准。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Users Section -->
+    <section class="section users" id="users">
+        <div class="container">
+            <h2 class="section-title">适用人群</h2>
+
+            <div class="users-grid">
+                <div class="user-card">
+                    <div class="user-icon">📱</div>
+                    <h3>社交媒体弄潮儿</h3>
+                    <p>制作3D盲盒分身、个性化头像定制、统一风格的动态配图</p>
+                </div>
+
+                <div class="user-card">
+                    <div class="user-icon">✍️</div>
+                    <h3>内容创作者</h3>
+                    <p>博主配图、小说角色设计、PPT方案配图</p>
+                </div>
+
+                <div class="user-card">
+                    <div class="user-icon">🎨</div>
+                    <h3>设计师</h3>
+                    <p>快速构思、高难度合成、创意草图</p>
+                </div>
+
+                <div class="user-card">
+                    <div class="user-icon">😊</div>
+                    <h3>"懒人"修图爱好者</h3>
+                    <p>不懂后期、不想学复杂软件、看重便捷性</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section class="section comparison" id="comparison">
+        <div class="container">
+            <h2 class="section-title">竞品对比：为什么选择Nano Banana？</h2>
+
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>功能特性</th>
+                            <th>Nano Banana</th>
+                            <th>Midjourney</th>
+                            <th>Stable Diffusion</th>
+                            <th>DALL-E 3</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>角色一致性</strong></td>
+                            <td>✅ 完美保持</td>
+                            <td>❌ 每次都变脸</td>
+                            <td>❌ 需要复杂插件</td>
+                            <td>❌ 基本无法保持</td>
+                        </tr>
+                        <tr>
+                            <td><strong>口语化编辑</strong></td>
+                            <td>✅ 一句话精准修改</td>
+                            <td>❌ 需重新生成</td>
+                            <td>❌ 需要技术知识</td>
+                            <td>❌ 不支持</td>
+                        </tr>
+                        <tr>
+                            <td><strong>多图融合</strong></td>
+                            <td>✅ 14张图智能合成</td>
+                            <td>❌ 不支持</td>
+                            <td>❌ 需要专业工具</td>
+                            <td>❌ 不支持</td>
+                        </tr>
+                        <tr>
+                            <td><strong>中文文字渲染</strong></td>
+                            <td>✅ 准确清晰</td>
+                            <td>❌ 经常乱码</td>
+                            <td>❌ 基本不可用</td>
+                            <td>❌ 乱码严重</td>
+                        </tr>
+                        <tr>
+                            <td><strong>使用难度</strong></td>
+                            <td>🟢 极简单</td>
+                            <td>🟡 需要学习Prompt</td>
+                            <td>🔴 需要编程知识</td>
+                            <td>🟡 需要精确描述</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section faq" id="faq">
+        <div class="container">
+            <h2 class="section-title">常见问题解答</h2>
+
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <div class="faq-question">Q: Nano Banana是免费的吗？</div>
+                    <div class="faq-answer">A: 基础功能免费使用，免费用户每日约100次生图或修图额度。Pro版本提供更多功能和更高额度。</div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: 需要下载软件吗？</div>
+                    <div class="faq-answer">A: 完全在线使用，无需下载安装，只需浏览器即可。在Gemini界面通过工具菜单进入，点击"🍌建立图像"即可开始。</div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: 能保持人物面部特征吗？</div>
+                    <div class="faq-answer">A: 能！Nano Banana的核心优势就是角色一致性，可以确保同一人物在不同场景下面部特征不变，包括长相、发型、肤色，甚至特定的胎记。</div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: 最多可以同时上传几张图片？</div>
+                    <div class="faq-answer">A: 标准版支持6张，Pro版本支持最多14张图片同时融合。</div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: 如何升级到Pro版本？</div>
+                    <div class="faq-answer">A: 可通过Google账号升级Gemini服务，Pro版本享受每日1000次额度和4K超清输出，以及更高优先级的处理权。</div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: 支持生成文字吗？准确度如何？</div>
+                    <div class="faq-answer">A: 支持中英文文字生成，英文准确度极高，中文文字渲染能力也在持续优化中。可以生成清晰、美观的文字，包括艺术字设计。</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>准备好体验Nano Banana了吗？</h2>
+            <p>立即开始你的AI图像编辑之旅</p>
+            <div class="cta-buttons">
+                <a href="#" class="btn btn-primary" style="background: white; color: #8B5CF6;">免费试用</a>
+                <a href="#" class="btn btn-secondary" style="border-color: white; color: white;">了解更多</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>产品</h4>
+                    <ul>
+                        <li><a href="#">功能介绍</a></li>
+                        <li><a href="#">价格方案</a></li>
+                        <li><a href="#">更新日志</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>资源</h4>
+                    <ul>
+                        <li><a href="#">使用教程</a></li>
+                        <li><a href="#">API文档</a></li>
+                        <li><a href="#">社区论坛</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>公司</h4>
+                    <ul>
+                        <li><a href="#">关于我们</a></li>
+                        <li><a href="#">博客</a></li>
+                        <li><a href="#">加入我们</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>法律</h4>
+                    <ul>
+                        <li><a href="#">隐私政策</a></li>
+                        <li><a href="#">使用条款</a></li>
+                        <li><a href="#">安全说明</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2024 Google LLC. Nano Banana是Gemini 2.5 Flash Image的内部代号。</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all sections
+        document.querySelectorAll('.section').forEach(section => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(30px)';
+            section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>
