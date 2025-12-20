@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Pro 图片生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+            padding: 15px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9em;
+        }
+
+        .main-content {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            height: calc(100vh - 100px);
+            max-height: 800px;
+            align-items: start;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .control-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 18px;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .prompt-input {
+            width: 100%;
+            height: 80px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+            resize: none;
+            font-family: inherit;
+        }
+
+        .prompt-input:focus {
+            outline: none;
+            border-color: #4285f4;
+            box-shadow: 0 0 0 3px rgba(66,133,244,0.1);
+        }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .model-card {
+            padding: 15px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .model-card:hover {
+            border-color: #4285f4;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(66,133,244,0.2);
+        }
+
+        .model-card.selected {
+            border-color: #4285f4;
+            background: #e8f0fe;
+        }
+
+        .model-name {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        .model-desc {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .size-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .size-option {
+            padding: 12px;
+            text-align: center;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+
+        .size-option:hover {
+            background: #f8f9ff;
+            transform: translateY(-2px);
+        }
+
+        .size-option.selected {
+            background: #e8f0fe;
+            border-color: #4285f4;
+            color: #4285f4;
+            font-weight: 600;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(66,133,244,0.4);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 450px;
+        }
+
+        .spinner {
+            width: 70px;
+            height: 70px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #4285f4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 25px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 25px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .loading-text {
+            font-size: 18px;
+            color: #333;
+            margin-top: 10px;
+        }
+
+        .loading-status {
+            color: #666;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .results-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .results-container .control-section {
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            background: transparent;
+        }
+
+        .results-container .section-title {
+            padding: 0 0 15px 0;
+            flex-shrink: 0;
+        }
+
+        .results-container .results-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .results-container .images-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 15px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            width: 600px;
+            height: 548px;
+            margin: 0 auto;
+            flex-shrink: 0;
+        }
+
+        .results-container .images-grid.empty {
+            justify-content: center;
+            align-items: center;
+        }
+
+        .results-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .image-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            width: 100%;
+        }
+
+        .image-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .image-wrapper {
+            position: relative;
+            width: 100%;
+            height: 508px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f5f5f5;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        .generated-image {
+            transition: transform 0.3s;
+        }
+
+        .image-wrapper:hover .generated-image {
+            transform: scale(1.05);
+        }
+
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .image-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+        }
+
+        .modal-image {
+            display: block;
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        .modal-close {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 30px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 2001;
+        }
+
+        .modal-close:hover {
+            background: rgba(0,0,0,0.9);
+            transform: scale(1.1);
+        }
+
+        .modal-actions {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .modal-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+        }
+
+      
+        .action-btn {
+            padding: 18px;
+            background: #f1f3f4;
+            color: #666;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            flex: 1;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            background: #e8eaed;
+        }
+
+        .action-btn:disabled {
+            background: #f5f5f5;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .action-btn:disabled:hover {
+            background: #f5f5f5;
+            color: #ccc;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .button-group .generate-btn {
+            grid-column: span 1;
+        }
+
+        .button-group .action-btn {
+            grid-column: span 1;
+        }
+
+        .action-btn:hover {
+            background: #e8eaed;
+        }
+
+        .error-message {
+            background: #feefc3;
+            border: 1px solid #fdeab0;
+            color: #9f6000;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .example-prompts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .example-prompt {
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-prompt:hover {
+            background: #4285f4;
+            color: white;
+            border-color: #4285f4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Gemini Pro 图片生成器</h1>
+            <p>使用 Google 最新的 AI 模型生成精美图片</p>
+        </div>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <!-- 模型选择 -->
+                <div class="control-section">
+                    <div class="section-title">
+                        <span>🤖</span>
+                        <span>选择模型</span>
+                    </div>
+                    <div class="model-grid">
+                        <div class="model-card selected" onclick="selectModel(this, 'gemini-3-pro-image-preview')">
+                            <div class="model-name">Gemini 3 Pro</div>
+                            <div class="model-desc">最新一代模型</div>
+                        </div>
+                        <div class="model-card" onclick="selectModel(this, 'nano-banana-2')">
+                            <div class="model-name">Nano Banana</div>
+                            <div class="model-desc">轻量高效模型</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图片尺寸 -->
+                <div class="control-section">
+                    <div class="section-title">
+                        <span>📐</span>
+                        <span>图片尺寸</span>
+                    </div>
+                    <div class="size-grid">
+                        <div class="size-option selected" onclick="selectSize(this, '1:1')">
+                            <div>正方形</div>
+                            <div>1:1</div>
+                        </div>
+                        <div class="size-option" onclick="selectSize(this, '2:3')">
+                            <div>竖版</div>
+                            <div>2:3</div>
+                        </div>
+                        <div class="size-option" onclick="selectSize(this, '3:2')">
+                            <div>横版</div>
+                            <div>3:2</div>
+                        </div>
+                        <div class="size-option" onclick="selectSize(this, '4:3')">
+                            <div>标清</div>
+                            <div>4:3</div>
+                        </div>
+                        <div class="size-option" onclick="selectSize(this, '3:4')">
+                            <div>竖屏</div>
+                            <div>3:4</div>
+                        </div>
+                        <div class="size-option" onclick="selectSize(this, '16:9')">
+                            <div>宽屏</div>
+                            <div>16:9</div>
+                        </div>
+                        <div class="size-option" onclick="selectSize(this, '9:16')">
+                            <div>手机</div>
+                            <div>9:16</div>
+                        </div>
+                        <div class="size-option" onclick="selectSize(this, '5:4')">
+                            <div>照片</div>
+                            <div>5:4</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 提示词输入 -->
+                <div class="control-section">
+                    <div class="section-title">
+                        <span>✍️</span>
+                        <span>描述你想要的图片</span>
+                    </div>
+                    <div class="form-group">
+                        <textarea
+                            id="prompt"
+                            class="prompt-input"
+                            placeholder="例如：一只可爱的猫咪在樱花树下玩耍，阳光明媚，细节丰富，高清画质"
+                            required
+                        ></textarea>
+                        <div class="example-prompts">
+                            <span class="example-prompt" onclick="setPrompt('一只威武的狮子在非洲草原上漫步，日落时分，金色光芒')">🦁 狮子草原</span>
+                            <span class="example-prompt" onclick="setPrompt('赛博朋克风格的城市夜景，霓虹灯闪烁，飞行汽车穿梭')">🌃 赛博朋克</span>
+                            <span class="example-prompt" onclick="setPrompt('中国古典山水画，云雾缭绕的山峰，水墨画风')">🏔️ 山水画</span>
+                            <span class="example-prompt" onclick="setPrompt('梵高风格的向日葵田，色彩鲜艳，笔触夸张')">🌻 向日葵</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 生成按钮 -->
+                <div class="control-section">
+                    <button class="generate-btn" onclick="generateImage()">
+                        ✨ 生成图片
+                    </button>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <!-- 错误提示 -->
+                <div class="error-message" id="errorMessage"></div>
+
+                <!-- 生成结果 -->
+                <div class="control-section results-container">
+                    <div class="section-title">
+                        <span>🖼️</span>
+                        <span>生成结果</span>
+                    </div>
+                    <div class="results-section active" id="resultsSection">
+                        <div class="images-grid" id="imagesGrid">
+                            <!-- 生成的图片将显示在这里 -->
+                            <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                <p style="text-align: center; color: #999; font-size: 16px;">👆 输入提示词后点击生成图片</p>
+                                <p style="margin-top: 10px; color: #888;">在左侧调整参数，然后点击生成</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div style="display: flex; gap: 10px; width: 100%; margin-top: 10px;">
+                        <button class="action-btn download-btn" onclick="downloadSelectedImage()" disabled>
+                            💾 下载
+                        </button>
+                        <button class="action-btn copy-btn" onclick="copySelectedUrl()" disabled>
+                            📋 复制链接
+                        </button>
+                        <button class="action-btn open-btn" onclick="openSelectedImage()" disabled>
+                            🔗 新窗口
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载遮罩 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="loading-text" id="loadingText">AI 正在创作中...</div>
+            <div class="loading-status" id="loadingStatus">预计需要 30-90 秒</div>
+            <div style="margin-top: 20px; color: #999; font-size: 14px;">
+                💡 请耐心等待，保持页面开启
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片弹窗 -->
+    <div class="image-modal" id="imageModal" onclick="closeImageModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeImageModal(event)">×</button>
+            <img id="modalImage" class="modal-image" src="" alt="查看大图">
+            <div class="modal-actions">
+                <button class="modal-btn" onclick="downloadCurrentImage()">💾 下载图片</button>
+                <button class="modal-btn" onclick="copyCurrentUrl()">📋 复制链接</button>
+                <button class="modal-btn" onclick="window.open(document.getElementById('modalImage').src, '_blank')">🔗 在新窗口打开</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API 配置
+        const API_BASE = 'https://api.apimart.ai';
+        const API_KEY = 'sk-XnOPrxWN5Pz3b1qFcIh7tUwhuFwq6wVNDENS15s4eJricRPK';
+        const TIMEOUT = 15 * 60 * 1000; // 15分钟超时
+
+        // 全局状态
+        let selectedModel = 'gemini-3-pro-image-preview';
+        let selectedSize = '1:1';
+        let selectedCount = 1;
+        let currentModalImageUrl = '';
+        let currentImageUrl = '';
+
+        // 启用/禁用操作按钮
+        function toggleActionButtons(enable) {
+            document.querySelectorAll('.download-btn, .copy-btn, .open-btn').forEach(btn => {
+                btn.disabled = !enable;
+            });
+        }
+
+        // 下载当前选中的图片
+        function downloadSelectedImage() {
+            if (currentImageUrl) {
+                downloadImage(currentImageUrl);
+            }
+        }
+
+        // 复制当前选中的链接
+        function copySelectedUrl() {
+            if (currentImageUrl) {
+                copyUrl(currentImageUrl);
+            }
+        }
+
+        // 在新窗口打开当前选中的图片
+        function openSelectedImage() {
+            if (currentImageUrl) {
+                openImageModal(currentImageUrl);
+            }
+        }
+
+        // 选择模型
+        function selectModel(element, model) {
+            document.querySelectorAll('.model-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedModel = model;
+        }
+
+        // 选择图片
+        function selectImage(url) {
+            // 更新当前选中的图片
+            currentImageUrl = url;
+
+            // 打开模态框
+            openImageModal(url);
+        }
+
+        // 选择尺寸
+        function selectSize(element, size) {
+            document.querySelectorAll('.size-option').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedSize = size;
+        }
+
+        // 设置示例提示词
+        function setPrompt(prompt) {
+            document.getElementById('prompt').value = prompt;
+        }
+
+        // 生成图片
+        async function generateImage() {
+            const prompt = document.getElementById('prompt').value.trim();
+
+            if (!prompt) {
+                showError('请输入图片描述');
+                return;
+            }
+
+            hideError();
+            showLoading();
+
+            try {
+                const params = {
+                    model: selectedModel,
+                    prompt: prompt,
+                    size: selectedSize,
+                    n: selectedCount
+                };
+
+                console.log('发送请求:', params);
+
+                const response = await fetch(`${API_BASE}/v1/images/generations`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(params)
+                });
+
+                const data = await response.json();
+                console.log('API 响应:', data);
+
+                if (data.code === 200 && data.data && data.data[0]) {
+                    const taskId = data.data[0].task_id;
+                    await pollResult(taskId);
+                } else {
+                    throw new Error(data.message || '创建任务失败');
+                }
+
+            } catch (error) {
+                console.error('生成失败:', error);
+                showError(`生成失败: ${error.message}`);
+                hideLoading();
+            }
+        }
+
+        // 轮询结果
+        async function pollResult(taskId) {
+            const startTime = Date.now();
+            const checkInterval = 3000; // 3秒查询一次
+
+            const checkStatus = async () => {
+                // 检查超时
+                if (Date.now() - startTime > TIMEOUT) {
+                    throw new Error('生成超时，请重试');
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE}/v1/tasks/${taskId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${API_KEY}`
+                        }
+                    });
+
+                    const data = await response.json();
+                    console.log('任务状态:', data);
+
+                    if (data.code !== 200) {
+                        throw new Error(data.message || '查询失败');
+                    }
+
+                    const task = data.data;
+                    updateProgress(task.progress || 0);
+
+                    if (task.status === 'completed') {
+                        hideLoading();
+                        showResults(task.result.images);
+                        return;
+                    } else if (task.status === 'failed') {
+                        throw new Error('任务失败');
+                    } else if (task.status === 'submitted' || task.status === 'processing' || task.status === 'pending') {
+                        // 继续轮询
+                        setTimeout(checkStatus, checkInterval);
+
+                        // 更新状态文本
+                        document.getElementById('loadingText').textContent =
+                            task.status === 'submitted' ? '任务已提交，等待处理...' :
+                            task.status === 'processing' ? '正在生成图片...' :
+                            '处理中...';
+                    } else {
+                        throw new Error(`未知状态: ${task.status}`);
+                    }
+
+                } catch (error) {
+                    throw error;
+                }
+            };
+
+            await checkStatus();
+        }
+
+        // 显示结果
+        function showResults(images) {
+            const grid = document.getElementById('imagesGrid');
+            grid.innerHTML = '';
+
+            // 启用操作按钮
+            toggleActionButtons(true);
+
+            let firstImageUrl = '';
+            images.forEach(imgGroup => {
+                imgGroup.url.forEach(url => {
+                    if (!firstImageUrl) firstImageUrl = url;
+                    const card = document.createElement('div');
+                    card.className = 'image-card';
+
+                    // 根据选择的尺寸调整显示
+                    let sizeInfo = '';
+                    switch(selectedSize) {
+                        case '1:1': sizeInfo = '正方形'; break;
+                        case '2:3': sizeInfo = '竖版 2:3'; break;
+                        case '3:2': sizeInfo = '横版 3:2'; break;
+                        case '4:3': sizeInfo = '标清 4:3'; break;
+                        case '3:4': sizeInfo = '竖屏 3:4'; break;
+                        case '16:9': sizeInfo = '宽屏 16:9'; break;
+                        case '9:16': sizeInfo = '手机 9:16'; break;
+                        case '5:4': sizeInfo = '照片 5:4'; break;
+                    }
+
+                    // 根据选择的尺寸设置图片样式
+                  let imgStyle = '';
+                  let aspectRatio = 1;
+
+                  switch(selectedSize) {
+                        case '1:1':
+                            aspectRatio = 1;
+                            imgStyle = 'aspect-ratio: 1;';
+                            break;
+                        case '2:3':
+                            aspectRatio = 0.667;
+                            imgStyle = 'aspect-ratio: 2/3;';
+                            break;
+                        case '3:2':
+                            aspectRatio = 1.5;
+                            imgStyle = 'aspect-ratio: 3/2;';
+                            break;
+                        case '4:3':
+                            aspectRatio = 1.333;
+                            imgStyle = 'aspect-ratio: 4/3;';
+                            break;
+                        case '3:4':
+                            aspectRatio = 0.75;
+                            imgStyle = 'aspect-ratio: 3/4;';
+                            break;
+                        case '16:9':
+                            aspectRatio = 1.778;
+                            imgStyle = 'aspect-ratio: 16/9;';
+                            break;
+                        case '9:16':
+                            aspectRatio = 0.5625;
+                            imgStyle = 'aspect-ratio: 9/16;';
+                            break;
+                        case '5:4':
+                            aspectRatio = 1.25;
+                            imgStyle = 'aspect-ratio: 5/4;';
+                            break;
+                  }
+
+                  card.innerHTML = `
+                        <div class="image-wrapper" onclick="selectImage('${url}')" style="${imgStyle}">
+                            <img src="${url}" alt="生成的图片" class="generated-image" onload="handleImageLoad(this, '${url}')">
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            });
+
+            // 设置第一张图片为当前选中
+            currentImageUrl = firstImageUrl;
+
+            document.getElementById('resultsSection').classList.add('active');
+        }
+
+        // 下载图片
+        function downloadImage(url) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `gemini-generated-${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // 复制URL
+        function copyUrl(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('链接已复制到剪贴板');
+            });
+        }
+
+        // 显示加载
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+            document.querySelector('.generate-btn').disabled = true;
+            document.querySelector('.generate-btn').textContent = '⏳ 生成中...';
+            updateProgress(0);
+
+            // 禁用操作按钮
+            toggleActionButtons(false);
+
+            // 根据模型设置不同的预计时间
+            let estimatedTime = selectedModel === 'gemini-3-pro-image-preview' ? '30-60 秒' : '60-90 秒';
+            document.getElementById('loadingStatus').textContent = `预计需要 ${estimatedTime}`;
+
+            // 清空之前的结果
+            const grid = document.getElementById('imagesGrid');
+            grid.innerHTML = `
+                <div style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <div class="spinner" style="margin: 0 auto 20px; width: 50px; height: 50px; border-width: 4px;"></div>
+                    <p style="color: #999;">AI 正在创作中，请稍候...</p>
+                    <p style="color: #888; font-size: 14px; margin-top: 10px;">预计需要 ${estimatedTime}</p>
+                </div>
+            `;
+        }
+
+        // 隐藏加载
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+            document.querySelector('.generate-btn').disabled = false;
+            document.querySelector('.generate-btn').textContent = '✨ 生成图片';
+        }
+
+        // 更新进度
+        function updateProgress(progress) {
+            document.getElementById('progressFill').style.width = `${progress}%`;
+
+            // 更新加载状态
+            let estimatedTime = selectedModel === 'gemini-3-pro-image-preview' ? '30-60 秒' : '60-90 秒';
+
+            if (progress < 30) {
+                document.getElementById('loadingStatus').textContent = `正在分析您的需求... (预计还需 ${estimatedTime})`;
+            } else if (progress < 60) {
+                let remainingTime = Math.ceil((100 - progress) / 100 * (selectedModel === 'gemini-3-pro-image-preview' ? 45 : 75));
+                document.getElementById('loadingStatus').textContent = `AI 正在创作中，已完成 ${progress}% (预计还需 ${remainingTime} 秒)`;
+            } else if (progress < 90) {
+                document.getElementById('loadingStatus').textContent = `即将完成，请稍等...`;
+            } else {
+                document.getElementById('loadingStatus').textContent = `最后处理中...`;
+            }
+        }
+
+        // 显示错误
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('active');
+        }
+
+        // 隐藏错误
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('active');
+        }
+
+        // 打开图片弹窗
+        function openImageModal(imageUrl) {
+            currentModalImageUrl = imageUrl;
+            document.getElementById('modalImage').src = imageUrl;
+            document.getElementById('imageModal').classList.add('active');
+            // 防止背景滚动
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭图片弹窗
+        function closeImageModal(event) {
+            if (!event || event.target === event.currentTarget) {
+                document.getElementById('imageModal').classList.remove('active');
+                document.body.style.overflow = 'auto';
+                currentModalImageUrl = '';
+            }
+        }
+
+        // 下载当前弹窗图片
+        function downloadCurrentImage() {
+            if (currentModalImageUrl) {
+                downloadImage(currentModalImageUrl);
+            }
+        }
+
+        // 复制当前弹窗URL
+        function copyCurrentUrl() {
+            if (currentModalImageUrl) {
+                copyUrl(currentModalImageUrl);
+            }
+        }
+
+        // ESC键关闭弹窗
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && document.getElementById('imageModal').classList.contains('active')) {
+                closeImageModal();
+            }
+        });
+
+        // 处理图片加载，根据比例自适应显示
+        function handleImageLoad(img, url) {
+            // 创建一个新的 Image 对象来获取真实尺寸
+            const tempImg = new Image();
+            tempImg.onload = function() {
+                const aspectRatio = tempImg.width / tempImg.height;
+
+                if (aspectRatio > 1) {
+                    // 横图：宽度占满
+                    img.style.width = '100%';
+                    img.style.height = 'auto';
+                    img.style.maxHeight = '100%';
+                } else {
+                    // 竖图或正方形：高度占满
+                    img.style.width = 'auto';
+                    img.style.height = '100%';
+                    img.style.maxWidth = '100%';
+                }
+
+                // 设置 object-fit 保持图片比例
+                img.style.objectFit = 'contain';
+            };
+            tempImg.src = url;
+        }
+    </script>
+</body>
+</html>
