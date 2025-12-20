@@ -4,7 +4,9 @@
       "Bash(npm start)",
       "WebSearch",
       "Bash(start http://localhost:8080/gemini-image-generator.html)",
-      "WebFetch(domain:apimart.ai)"
+      "WebFetch(domain:apimart.ai)",
+      "Bash(git push:*)",
+      "Bash(git config:*)"
     ]
   }
 }
